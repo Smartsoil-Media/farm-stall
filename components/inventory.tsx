@@ -50,8 +50,8 @@ export default function Inventory() {
   const [currentBatch, setCurrentBatch] = useState(null)
   const [batchType, setBatchType] = useState<BatchType | null>(null)
   const [newFlowers, setNewFlowers] = useState<FlowerItem>({
-    bunches: 1,
-    salePrice: 0,
+    bunches: null,
+    salePrice: null,
   })
   const [newBatch, setNewBatch] = useState({
     type: "",
@@ -541,20 +541,22 @@ export default function Inventory() {
                 <Label htmlFor="bunches">Number of Bunches</Label>
                 <Input
                   id="bunches"
-                  value={newFlowers.bunches}
-                  onChange={(e) => setNewFlowers({ ...newFlowers, bunches: parseInt(e.target.value) || 0 })}
+                  value={newFlowers.bunches || ''}
+                  onChange={(e) => setNewFlowers({ ...newFlowers, bunches: parseInt(e.target.value) || null })}
                   type="number"
                   min="1"
+                  placeholder="Enter number of bunches"
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="salePrice">Sale Price per Bunch</Label>
                 <Input
                   id="salePrice"
-                  value={newFlowers.salePrice}
-                  onChange={(e) => setNewFlowers({ ...newFlowers, salePrice: parseFloat(e.target.value) || 0 })}
+                  value={newFlowers.salePrice || ''}
+                  onChange={(e) => setNewFlowers({ ...newFlowers, salePrice: parseFloat(e.target.value) || null })}
                   type="number"
                   step="0.01"
+                  placeholder="$/bunch"
                 />
               </div>
             </div>
