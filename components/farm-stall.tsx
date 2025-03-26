@@ -3,15 +3,21 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useInventory } from "@/lib/inventory-context"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { ChevronDown } from "lucide-react"
 
 export default function FarmStall() {
   const { inventory, markAsSold, moveToInventory } = useInventory()
   const { toast } = useToast()
   const [view, setView] = useState("active")
+  const [openGroups, setOpenGroups] = useState<string[]>([])
 
   const handleMarkAsSold = (id) => {
     markAsSold(id)
@@ -29,115 +35,113 @@ export default function FarmStall() {
     })
   }
 
+  const toggleGroup = (type: string) => {
+    setOpenGroups(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    )
+  }
+
   const activeItems = inventory.filter((item) => item.inFarmStall && !item.sold)
-  const soldItems = inventory.filter((item) => item.sold)
+
+  // Group items by type
+  const groupedItems = activeItems.reduce((groups, item) => {
+    const type = item.type
+    if (!groups[type]) {
+      groups[type] = []
+    }
+    groups[type].push(item)
+    return groups
+  }, {})
+
+  // Calculate group summaries
+  const getGroupSummary = (items) => {
+    const totalWeight = items.reduce((sum, item) => sum + item.weight, 0)
+    const totalValue = items.reduce((sum, item) => sum + item.salePrice, 0)
+    return { totalWeight, totalValue, count: items.length }
+  }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Farm Stall</h2>
-
-      <Tabs defaultValue="active" onValueChange={setView}>
-        <TabsList>
-          <TabsTrigger value="active">Active Items ({activeItems.length})</TabsTrigger>
-          <TabsTrigger value="sold">Sold Items ({soldItems.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="active">
-          <Card>
-            <CardHeader>
-              <CardTitle>Items in Farm Stall</CardTitle>
-              <CardDescription>All vegetables currently displayed in the farm stall</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activeItems.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  No items in the farm stall. Move items from inventory to display them here.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activeItems.map((item) => (
-                    <Card key={item.id}>
-                      <CardContent className="pt-6">
-                        <div className="flex justify-between items-start mb-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Farm Stall</CardTitle>
+          <CardDescription>Manage items in the farm stall</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Object.entries(groupedItems).map(([type, items]) => {
+              const { totalWeight, totalValue, count } = getGroupSummary(items as any[])
+              return (
+                <Collapsible
+                  key={type}
+                  open={openGroups.includes(type)}
+                  onOpenChange={() => toggleGroup(type)}
+                >
+                  <Card>
+                    <CardContent className="p-4">
+                      <CollapsibleTrigger className="w-full">
+                        <div className="flex justify-between items-center">
                           <div>
-                            <h3 className="font-medium">{item.type}</h3>
-                            <p className="text-sm text-muted-foreground">{item.weight.toFixed(2)} kg</p>
+                            <h3 className="font-medium">{type}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {count} items • {totalWeight.toFixed(2)} kg total
+                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold">R{item.salePrice.toFixed(2)}</p>
-                            <p className="text-xs text-muted-foreground">Cost: R{item.costPrice.toFixed(2)}</p>
+                            <p className="font-bold">${totalValue.toFixed(2)}</p>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
-                          <Button
-                            variant="default"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => handleMarkAsSold(item.id)}
-                          >
-                            Sold
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => handleMoveToInventory(item.id)}
-                          >
-                            To Storage
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      </CollapsibleTrigger>
 
-        <TabsContent value="sold">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sold Items</CardTitle>
-              <CardDescription>History of all sold items from the farm stall</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {soldItems.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">No items have been sold yet.</div>
-              ) : (
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Weight</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Profit</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {soldItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.type}</TableCell>
-                          <TableCell>{item.weight.toFixed(2)} kg</TableCell>
-                          <TableCell>R{item.salePrice.toFixed(2)}</TableCell>
-                          <TableCell
-                            className={item.salePrice - item.costPrice > 0 ? "text-green-600" : "text-red-600"}
+                      <CollapsibleContent className="mt-4 space-y-2">
+                        {(items as any[]).map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex justify-between items-center p-2 rounded-lg border"
                           >
-                            R{(item.salePrice - item.costPrice).toFixed(2)}
-                          </TableCell>
-                          <TableCell>{new Date(item.soldDate).toLocaleDateString()}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                            <div>
+                              <p className="text-sm">{item.weight.toFixed(2)} kg</p>
+                              <p className="text-xs text-muted-foreground">
+                                Cost: ${item.costPrice.toFixed(2)}
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="bg-green-600/20 hover:bg-green-500/30 text-green-400 border border-green-800/50"
+                                onClick={() => handleMarkAsSold(item.id)}
+                              >
+                                Sold
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-blue-600/20 hover:bg-blue-500/30 text-blue-400 border border-blue-800/50"
+                                onClick={() => handleMoveToInventory(item.id)}
+                              >
+                                To Storage
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </CollapsibleContent>
+                    </CardContent>
+                  </Card>
+                </Collapsible>
+              )
+            })}
+            {activeItems.length === 0 && (
+              <div className="text-center py-4 text-muted-foreground">
+                No items in farm stall
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -14,6 +14,7 @@ type InventoryItem = {
   sold: boolean
   date: string
   soldDate?: string
+  fromExternalBatch: boolean
 }
 
 type InventoryContextType = {
