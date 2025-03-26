@@ -140,25 +140,32 @@ export default function Inventory() {
   }
 
   const handleAddFarmProduce = async () => {
-    if (!newBatch.type || !newBatch.costPerKg) {
+    if (!newBatch.type) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please select a vegetable type",
         variant: "destructive",
       })
       return
     }
 
-    const batchRef = ref(db, 'currentBatch')
-    await set(batchRef, {
-      type: newBatch.customType || newBatch.type,
-      costPerKg: parseFloat(newBatch.costPerKg),
-      fromExternalBatch: false
-    })
+    try {
+      const batchRef = ref(db, 'currentBatch')
+      await set(batchRef, {
+        type: newBatch.customType || newBatch.type,
+        costPerKg: 0,  // Always 0 for Feel Good Farm produce
+        fromExternalBatch: false
+      })
 
-    setOpen(false)
-    setNewBatch({ type: "", costPerKg: "", customType: "" })
-    router.push('/weighing')
+      setOpen(false)  // Close the dialog
+      setNewBatch({ type: "", costPerKg: "", customType: "" })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start batch",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleAddFlowers = async () => {
