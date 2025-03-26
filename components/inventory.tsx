@@ -104,7 +104,6 @@ export default function Inventory() {
 
     setOpen(false)
     setNewBatch({ type: "", costPerKg: "", customType: "" })
-    router.push('/weighing')
   }
 
   const handleMoveToStall = (id: string) => {
