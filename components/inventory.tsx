@@ -178,22 +178,36 @@ export default function Inventory() {
       return
     }
 
-    const id = Date.now().toString()
-    await addToInventory({
-      id,
-      type: "Flowers",
-      weight: newFlowers.bunches,
-      costPrice: 0,
-      salePrice: newFlowers.salePrice,
-      fromExternalBatch: false
-    })
+    try {
+      // Create an array of promises for adding each bunch
+      const addPromises = Array(newFlowers.bunches).fill(null).map(async () => {
+        const id = Date.now().toString() + Math.random().toString(36).substr(2, 9)
+        await addToInventory({
+          id,
+          type: "Flowers",
+          weight: 1, // Each bunch is counted as 1
+          costPrice: 0,
+          salePrice: newFlowers.salePrice,
+          fromExternalBatch: false
+        })
+      })
 
-    setOpen(false)
-    setNewFlowers({ bunches: 1, salePrice: 0 })
-    toast({
-      title: "Success",
-      description: "Flowers added to inventory",
-    })
+      // Wait for all bunches to be added
+      await Promise.all(addPromises)
+
+      setOpen(false)
+      setNewFlowers({ bunches: 1, salePrice: 0 })
+      toast({
+        title: "Success",
+        description: `${newFlowers.bunches} flower bunches added to inventory`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add flowers to inventory",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleEditItem = (item: InventoryItem) => {
