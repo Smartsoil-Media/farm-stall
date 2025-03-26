@@ -241,13 +241,22 @@ export default function WeighingCalculator() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h2 className="text-2xl font-bold">Weighing Calculator</h2>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={handleCancelBatch}>
+        <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCancelBatch}
+            className="w-full sm:w-auto bg-red-600/20 hover:bg-red-500/30 text-red-400 border border-red-800/50 transition-colors duration-200"
+          >
             Cancel Batch
           </Button>
-          <Button onClick={handleFinishBatch}>Finish Batch</Button>
+          <Button
+            onClick={handleFinishBatch}
+            className="w-full sm:w-auto bg-blue-600/20 hover:bg-blue-500/30 text-blue-400 border border-blue-800/50 transition-colors duration-200"
+          >
+            Finish Batch
+          </Button>
         </div>
       </div>
 
